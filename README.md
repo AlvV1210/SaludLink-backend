@@ -24,3 +24,18 @@ En `docs/structurizr/workspace.dsl` hay un workspace mínimo para [Structurizr](
 ## Secretos
 
 Usa `.env.example` como referencia de variables. En despliegue (p. ej. Render) suelen definirse `JDBC_*`, `JWT_SECRET`, etc., como en `application.yml`.
+
+##Primeras funcionalidades:
+-Citas del paciente (listar y cancelar según rol)
+-Medicamentos del paciente (listar, alta, baja lógica)
+-Catálogo para agendar (especialidades y listado de médicos)
+##Los siguientes: 
+- Recordatorios de medicación
+-Documentos médicos (subir/listar/metadatos; sin binario)
+-Gestión / alta de médicos (admin o registro doctor + tabla doctors)
+-Perfil paciente (GET/PATCH datos clínicos)
+-Disponibilidad o reglas de agenda (slots, no solapamiento, estados extra)
+-Panel admin (usuarios, verificación médico, reportes simples)
+-Notificaciones o recordatorios programados (stub + endpoint)
+-Integración / despliegue (Render, variables JDBC_*, health)
+-Semillas de datos + pruebas documentadas
