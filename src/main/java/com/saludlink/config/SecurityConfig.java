@@ -61,7 +61,9 @@ public class SecurityConfig {
                         auth ->
                                 auth.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
                                         .permitAll()
-                                        .requestMatchers(HttpMethod.GET, "/", "/actuator/health")
+                                        .requestMatchers(HttpMethod.GET, "/", "/actuator/health", "/favicon.ico")
+                                        .permitAll()
+                                        .requestMatchers("/error")
                                         .permitAll()
                                         .requestMatchers(
                                                 "/v3/api-docs/**",

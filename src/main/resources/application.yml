@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: saludlink
+  datasource:
+    url: ${JDBC_DATABASE_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/saludlink_db}}
+    username: ${JDBC_DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:postgres}}
+    password: ${JDBC_DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:admin123}}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
+
+jwt:
+  secret: ${JWT_SECRET:saludlink-secret-key-2026-muy-segura23}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

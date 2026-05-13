@@ -1,7 +1,7 @@
 package com.saludlink.controller;
 
 import com.saludlink.model.dto.MedicationRequestDTO;
-import com.saludlink.model.entity.Medication;
+import com.saludlink.model.dto.MedicationResponseDTO;
 import com.saludlink.model.entity.Patient;
 import com.saludlink.repository.PatientRepository;
 import com.saludlink.security.CustomUserDetails;
@@ -51,28 +51,28 @@ public class MedicationController {
     /** Contrato frontend: listado del paciente autenticado. */
     @GetMapping
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<List<Medication>> listMine(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<List<MedicationResponseDTO>> listMine(@AuthenticationPrincipal CustomUserDetails principal) {
         return ResponseEntity.ok(medicationService.getMedicationsByPatient(requirePatientId(principal)));
     }
 
     /** Contrato frontend: alta para el paciente autenticado. */
     @PostMapping
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<Medication> addMine(
+    public ResponseEntity<MedicationResponseDTO> addMine(
             @AuthenticationPrincipal CustomUserDetails principal, @Valid @RequestBody MedicationRequestDTO dto) {
         return ResponseEntity.ok(medicationService.addMedication(requirePatientId(principal), dto));
     }
 
     @PostMapping("/{patientId}")
     @PreAuthorize("hasAnyRole('PATIENT','ADMIN','DOCTOR')")
-    public ResponseEntity<Medication> addMedication(
+    public ResponseEntity<MedicationResponseDTO> addMedication(
             @PathVariable Long patientId, @Valid @RequestBody MedicationRequestDTO dto) {
         return ResponseEntity.ok(medicationService.addMedication(patientId, dto));
     }
 
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("hasAnyRole('PATIENT','ADMIN','DOCTOR')")
-    public ResponseEntity<List<Medication>> listByPatient(@PathVariable Long patientId) {
+    public ResponseEntity<List<MedicationResponseDTO>> listByPatient(@PathVariable Long patientId) {
         return ResponseEntity.ok(medicationService.getMedicationsByPatient(patientId));
     }
 

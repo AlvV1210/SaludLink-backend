@@ -1,6 +1,7 @@
 package com.saludlink.service.impl;
 
 import com.saludlink.model.dto.MedicationRequestDTO;
+import com.saludlink.model.dto.MedicationResponseDTO;
 import com.saludlink.model.entity.Medication;
 import com.saludlink.repository.MedicationRepository;
 import com.saludlink.repository.PatientRepository;
@@ -21,7 +22,7 @@ public class MedicationServiceImpl implements MedicationService {
     private final PatientRepository patientRepository;
 
     @Override
-    public Medication addMedication(Long patientId, MedicationRequestDTO dto) {
+    public MedicationResponseDTO addMedication(Long patientId, MedicationRequestDTO dto) {
         var patient =
                 patientRepository
                         .findById(patientId)
@@ -36,16 +37,19 @@ public class MedicationServiceImpl implements MedicationService {
                         .endDate(dto.getEndDate())
                         .active(true)
                         .build();
-        return medicationRepository.save(medication);
+        Medication saved = medicationRepository.save(medication);
+        return MedicationResponseDTO.fromEntity(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Medication> getMedicationsByPatient(Long patientId) {
+    public List<MedicationResponseDTO> getMedicationsByPatient(Long patientId) {
         if (!patientRepository.existsById(patientId)) {
             throw new EntityNotFoundException("Paciente no encontrado: " + patientId);
         }
-        return medicationRepository.findByPatientId(patientId);
+        return medicationRepository.findByPatientId(patientId).stream()
+                .map(MedicationResponseDTO::fromEntity)
+                .toList();
     }
 
     @Override

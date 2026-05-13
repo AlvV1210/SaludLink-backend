@@ -4,7 +4,7 @@ Backend para gestionar citas médicas, medicamentos y catálogo de especialidade
 
 ## Desarrollo local
 
-1. Base de datos: desde esta carpeta, `docker compose up -d db` (puerto **5433**, usuario `postgres`, contraseña como en `docker-compose.yml` y `application.properties`).
+1. Base de datos: desde esta carpeta, `docker compose up -d db` (puerto **5433**, usuario `postgres`, contraseña como en `docker-compose.yml` y variables en `application.yml`).
 2. Arranque (Java **17+**, p. ej. Temurin 21): no hace falta tener Maven instalado; el repo incluye **Maven Wrapper**.
    - **Windows (PowerShell):** `.\mvnw.cmd spring-boot:run`
    - **macOS / Linux:** `./mvnw spring-boot:run`
@@ -22,4 +22,5 @@ Backend para gestionar citas médicas, medicamentos y catálogo de especialidade
 En `docs/structurizr/workspace.dsl` hay un workspace mínimo para [Structurizr](https://structurizr.com/) (contexto + contenedores). Puedes subirlo a Structurizr Lite/Cloud.
 
 ## Secretos
- Usa `.env.example` como referencia de variables.
+
+Usa `.env.example` como referencia de variables. En despliegue (p. ej. Render) suelen definirse `JDBC_*`, `JWT_SECRET`, etc., como en `application.yml`.
