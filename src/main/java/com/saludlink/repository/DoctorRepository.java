@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
+    boolean existsByLicenseNumber(String licenseNumber);
+
     @Query("SELECT d FROM Doctor d WHERE d.user.id = :userId")
     Optional<Doctor> findByUserId(@Param("userId") Long userId);
 

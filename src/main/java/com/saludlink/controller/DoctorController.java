@@ -21,21 +21,6 @@ public class DoctorController {
 
     private final DoctorRepository doctorRepository;
 
-    private static DoctorResponseDTO toDto(Doctor d) {
-        var u = d.getUser();
-        return DoctorResponseDTO.builder()
-                .id(d.getId())
-                .firstName(u.getFirstName())
-                .lastName(u.getLastName())
-                .email(u.getEmail())
-                .specialty(d.getSpecialty())
-                .licenseNumber(d.getLicenseNumber())
-                .verified(d.isVerified())
-                .biography(d.getBiography())
-                .consultationFee(d.getConsultationFee())
-                .build();
-    }
-
     /**
      * Lista médicos verificados; si {@code specialty} está presente filtra (contrato frontend:
      * {@code GET /api/doctors?specialty=...}).
@@ -45,9 +30,9 @@ public class DoctorController {
             @RequestParam(required = false) String specialty) {
         List<DoctorResponseDTO> list;
         if (specialty != null && !specialty.isBlank()) {
-            list = doctorRepository.findBySpecialty(specialty).stream().map(DoctorController::toDto).toList();
+            list = doctorRepository.findBySpecialty(specialty).stream().map(DoctorResponseDTO::fromEntity).toList();
         } else {
-            list = doctorRepository.findByVerifiedTrue().stream().map(DoctorController::toDto).toList();
+            list = doctorRepository.findByVerifiedTrue().stream().map(DoctorResponseDTO::fromEntity).toList();
         }
         return ResponseEntity.ok(list);
     }
@@ -55,7 +40,7 @@ public class DoctorController {
     @GetMapping("/specialty/{specialty}")
     public ResponseEntity<List<DoctorResponseDTO>> bySpecialtyPath(@PathVariable String specialty) {
         List<DoctorResponseDTO> list =
-                doctorRepository.findBySpecialty(specialty).stream().map(DoctorController::toDto).toList();
+                doctorRepository.findBySpecialty(specialty).stream().map(DoctorResponseDTO::fromEntity).toList();
         return ResponseEntity.ok(list);
     }
 
@@ -65,6 +50,6 @@ public class DoctorController {
                 doctorRepository
                         .findDetailById(id)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Médico no encontrado"));
-        return ResponseEntity.ok(toDto(doctor));
+        return ResponseEntity.ok(DoctorResponseDTO.fromEntity(doctor));
     }
 }
