@@ -1,6 +1,7 @@
 package com.saludlink.service;
 
 import com.saludlink.model.dto.AppointmentRequestDTO;
+import com.saludlink.model.dto.AppointmentRescheduleDTO;
 import com.saludlink.model.dto.AppointmentResponseDTO;
 import com.saludlink.model.enums.AppointmentStatus;
 import java.util.List;
@@ -21,4 +22,8 @@ public interface AppointmentService {
     void cancelAppointmentForPatient(Long appointmentId, Long patientId);
 
     void updateAppointmentStatus(Long id, AppointmentStatus status);
+
+    AppointmentResponseDTO rescheduleForPatient(Long appointmentId, Long patientId, AppointmentRescheduleDTO dto);
+
+    AppointmentResponseDTO rescheduleAsAdmin(Long appointmentId, AppointmentRescheduleDTO dto);
 }

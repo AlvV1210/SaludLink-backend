@@ -25,17 +25,25 @@ En `docs/structurizr/workspace.dsl` hay un workspace mínimo para [Structurizr](
 
 Usa `.env.example` como referencia de variables. En despliegue (p. ej. Render) suelen definirse `JDBC_*`, `JWT_SECRET`, etc., como en `application.yml`.
 
-##Primeras funcionalidades:
--Citas del paciente (listar y cancelar según rol)
--Medicamentos del paciente (listar, alta, baja lógica)
--Catálogo para agendar (especialidades y listado de médicos)
-##Los siguientes: 
+## API (lote TB2 reciente)
+
+- `GET /api/auth/me` — usuario actual (JWT); incluye `patientId` / `doctorId` si aplica.
+- `GET` / `PUT /api/patients/me/profile` — perfil de salud del paciente autenticado (rol **PATIENT**).
+- `PATCH /api/appointments/{id}/reschedule` — reprogramar cita (**PATIENT** dueño o **ADMIN**).
+
+## Primeras funcionalidades
+
+- Citas del paciente (listar y cancelar según rol)
+- Medicamentos del paciente (listar, alta, baja lógica; `PUT` y `PATCH` en desactivar son equivalentes)
+- Catálogo para agendar (especialidades y listado de médicos)
+
+## Próximas (backlog)
+
 - Recordatorios de medicación
--Documentos médicos (subir/listar/metadatos; sin binario)
--Gestión / alta de médicos (admin o registro doctor + tabla doctors)
--Perfil paciente (GET/PATCH datos clínicos)
--Disponibilidad o reglas de agenda (slots, no solapamiento, estados extra)
--Panel admin (usuarios, verificación médico, reportes simples)
--Notificaciones o recordatorios programados (stub + endpoint)
--Integración / despliegue (Render, variables JDBC_*, health)
--Semillas de datos + pruebas documentadas
+- Documentos médicos (subir/listar/metadatos; sin binario pesado)
+- Gestión / alta de médicos (admin o registro doctor)
+- Disponibilidad o reglas de agenda (slots, no solapamiento)
+- Panel admin (usuarios, verificación médico, reportes simples)
+- Notificaciones o recordatorios programados (stub + endpoint)
+- Integración / despliegue (Render, variables `JDBC_*`, health)
+- Semillas de datos + pruebas documentadas

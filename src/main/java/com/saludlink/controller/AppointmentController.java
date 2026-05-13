@@ -1,6 +1,7 @@
 package com.saludlink.controller;
 
 import com.saludlink.model.dto.AppointmentRequestDTO;
+import com.saludlink.model.dto.AppointmentRescheduleDTO;
 import com.saludlink.model.dto.AppointmentResponseDTO;
 import com.saludlink.model.dto.AppointmentStatusUpdateDTO;
 import com.saludlink.model.entity.Patient;
@@ -63,6 +64,19 @@ public class AppointmentController {
             @AuthenticationPrincipal CustomUserDetails principal, @Valid @RequestBody AppointmentRequestDTO dto) {
         Long patientId = requirePatientId(principal);
         return ResponseEntity.ok(appointmentService.createAppointment(patientId, dto));
+    }
+
+    @PatchMapping("/{id}/reschedule")
+    @PreAuthorize("hasAnyRole('PATIENT','ADMIN')")
+    public ResponseEntity<AppointmentResponseDTO> reschedule(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable Long id,
+            @Valid @RequestBody AppointmentRescheduleDTO dto) {
+        if (isAdmin(principal)) {
+            return ResponseEntity.ok(appointmentService.rescheduleAsAdmin(id, dto));
+        }
+        return ResponseEntity.ok(
+                appointmentService.rescheduleForPatient(id, requirePatientId(principal), dto));
     }
 
     @GetMapping("/patient/{patientId}")

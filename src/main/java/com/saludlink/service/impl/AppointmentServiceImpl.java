@@ -1,6 +1,7 @@
 package com.saludlink.service.impl;
 
 import com.saludlink.model.dto.AppointmentRequestDTO;
+import com.saludlink.model.dto.AppointmentRescheduleDTO;
 import com.saludlink.model.dto.AppointmentResponseDTO;
 import com.saludlink.model.entity.Appointment;
 import com.saludlink.model.enums.AppointmentStatus;
@@ -88,6 +89,41 @@ public class AppointmentServiceImpl implements AppointmentService {
                         .findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + id));
         appointment.setStatus(status);
+    }
+
+    @Override
+    public AppointmentResponseDTO rescheduleForPatient(
+            Long appointmentId, Long patientId, AppointmentRescheduleDTO dto) {
+        Appointment appointment =
+                appointmentRepository
+                        .findById(appointmentId)
+                        .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + appointmentId));
+        if (!appointment.getPatient().getId().equals(patientId)) {
+            throw new AccessDeniedException("La cita no pertenece al paciente autenticado");
+        }
+        applyReschedule(appointment, dto);
+        return toResponse(appointment);
+    }
+
+    @Override
+    public AppointmentResponseDTO rescheduleAsAdmin(Long appointmentId, AppointmentRescheduleDTO dto) {
+        Appointment appointment =
+                appointmentRepository
+                        .findById(appointmentId)
+                        .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + appointmentId));
+        applyReschedule(appointment, dto);
+        return toResponse(appointment);
+    }
+
+    private void applyReschedule(Appointment appointment, AppointmentRescheduleDTO dto) {
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED
+                || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+            throw new IllegalArgumentException("No se puede reprogramar una cita cancelada o completada");
+        }
+        appointment.setAppointmentDate(dto.getAppointmentDate());
+        if (dto.getModality() != null) {
+            appointment.setModality(dto.getModality());
+        }
     }
 
     private AppointmentResponseDTO toResponse(Appointment a) {

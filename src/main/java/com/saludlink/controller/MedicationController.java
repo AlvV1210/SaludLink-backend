@@ -24,6 +24,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Medicamentos del paciente. {@code PUT} y {@code PATCH} en {@code /{id}/deactivate} realizan la misma operación
+ * (baja lógica) para alinear con distintas expectativas del cliente HTTP / front; conviene documentar una como
+ * canónica en OpenAPI y tratar la otra como alias.
+ */
 @RestController
 @RequestMapping("/api/medications")
 @RequiredArgsConstructor
