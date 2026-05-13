@@ -23,5 +23,10 @@
 .DS_Store
 Thumbs.db
 
+# Secrets (Lab 03-B / despliegue)
+.env
+.env.*
+!.env.example
+
 # Logs
 *.log

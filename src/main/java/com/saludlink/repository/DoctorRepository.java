@@ -22,4 +22,8 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
     @Query("SELECT d FROM Doctor d JOIN FETCH d.user WHERE d.id = :id")
     Optional<Doctor> findDetailById(@Param("id") Long id);
+
+    @Query(
+            "SELECT DISTINCT d.specialty FROM Doctor d WHERE d.specialty IS NOT NULL AND TRIM(d.specialty) <> '' ORDER BY d.specialty")
+    List<String> findDistinctSpecialties();
 }

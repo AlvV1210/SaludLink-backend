@@ -11,6 +11,7 @@ import com.saludlink.service.AppointmentService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +66,18 @@ public class AppointmentServiceImpl implements AppointmentService {
                 appointmentRepository
                         .findById(appointmentId)
                         .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + appointmentId));
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+    }
+
+    @Override
+    public void cancelAppointmentForPatient(Long appointmentId, Long patientId) {
+        Appointment appointment =
+                appointmentRepository
+                        .findById(appointmentId)
+                        .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + appointmentId));
+        if (!appointment.getPatient().getId().equals(patientId)) {
+            throw new AccessDeniedException("La cita no pertenece al paciente autenticado");
+        }
         appointment.setStatus(AppointmentStatus.CANCELLED);
     }
 

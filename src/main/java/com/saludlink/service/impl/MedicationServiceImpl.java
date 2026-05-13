@@ -8,6 +8,7 @@ import com.saludlink.service.MedicationService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +54,18 @@ public class MedicationServiceImpl implements MedicationService {
                 medicationRepository
                         .findById(medicationId)
                         .orElseThrow(() -> new EntityNotFoundException("Medicamento no encontrado: " + medicationId));
+        medication.setActive(false);
+    }
+
+    @Override
+    public void deactivateMedicationForPatient(Long medicationId, Long patientId) {
+        Medication medication =
+                medicationRepository
+                        .findById(medicationId)
+                        .orElseThrow(() -> new EntityNotFoundException("Medicamento no encontrado: " + medicationId));
+        if (!medication.getPatient().getId().equals(patientId)) {
+            throw new AccessDeniedException("El medicamento no pertenece al paciente autenticado");
+        }
         medication.setActive(false);
     }
 }

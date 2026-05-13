@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -35,15 +36,24 @@ public class DoctorController {
                 .build();
     }
 
+    /**
+     * Lista médicos verificados; si {@code specialty} está presente filtra (contrato frontend:
+     * {@code GET /api/doctors?specialty=...}).
+     */
     @GetMapping
-    public ResponseEntity<List<DoctorResponseDTO>> listVerified() {
-        List<DoctorResponseDTO> list =
-                doctorRepository.findByVerifiedTrue().stream().map(DoctorController::toDto).toList();
+    public ResponseEntity<List<DoctorResponseDTO>> list(
+            @RequestParam(required = false) String specialty) {
+        List<DoctorResponseDTO> list;
+        if (specialty != null && !specialty.isBlank()) {
+            list = doctorRepository.findBySpecialty(specialty).stream().map(DoctorController::toDto).toList();
+        } else {
+            list = doctorRepository.findByVerifiedTrue().stream().map(DoctorController::toDto).toList();
+        }
         return ResponseEntity.ok(list);
     }
 
     @GetMapping("/specialty/{specialty}")
-    public ResponseEntity<List<DoctorResponseDTO>> bySpecialty(@PathVariable String specialty) {
+    public ResponseEntity<List<DoctorResponseDTO>> bySpecialtyPath(@PathVariable String specialty) {
         List<DoctorResponseDTO> list =
                 doctorRepository.findBySpecialty(specialty).stream().map(DoctorController::toDto).toList();
         return ResponseEntity.ok(list);

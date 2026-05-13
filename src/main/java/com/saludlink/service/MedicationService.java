@@ -11,4 +11,6 @@ public interface MedicationService {
     List<Medication> getMedicationsByPatient(Long patientId);
 
     void deactivateMedication(Long medicationId);
+
+    void deactivateMedicationForPatient(Long medicationId, Long patientId);
 }

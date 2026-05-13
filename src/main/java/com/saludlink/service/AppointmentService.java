@@ -15,5 +15,10 @@ public interface AppointmentService {
 
     void cancelAppointment(Long appointmentId);
 
+    /**
+     * Cancela cita verificando que pertenezca al paciente (flujo paciente / front).
+     */
+    void cancelAppointmentForPatient(Long appointmentId, Long patientId);
+
     void updateAppointmentStatus(Long id, AppointmentStatus status);
 }
