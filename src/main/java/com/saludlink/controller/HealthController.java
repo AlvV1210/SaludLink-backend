@@ -1,6 +1,7 @@
 package com.saludlink.controller;
 
-import java.util.Map;
+import com.saludlink.model.dto.ApiRootResponseDTO;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -8,7 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class HealthController {
 
     @GetMapping("/")
-    public Map<String, String> root() {
-        return Map.of("message", "SaludLink API is running", "health", "/actuator/health");
+    public ResponseEntity<ApiRootResponseDTO> root() {
+        return ResponseEntity.ok(
+                ApiRootResponseDTO.builder()
+                        .message("SaludLink API is running")
+                        .health("/actuator/health")
+                        .build());
     }
 }

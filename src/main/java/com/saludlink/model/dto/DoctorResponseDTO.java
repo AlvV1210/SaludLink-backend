@@ -1,5 +1,6 @@
 package com.saludlink.model.dto;
 
+import com.saludlink.model.entity.Doctor;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,4 +22,19 @@ public class DoctorResponseDTO {
     private boolean verified;
     private String biography;
     private BigDecimal consultationFee;
+
+    public static DoctorResponseDTO fromEntity(Doctor d) {
+        var u = d.getUser();
+        return DoctorResponseDTO.builder()
+                .id(d.getId())
+                .firstName(u.getFirstName())
+                .lastName(u.getLastName())
+                .email(u.getEmail())
+                .specialty(d.getSpecialty())
+                .licenseNumber(d.getLicenseNumber())
+                .verified(d.isVerified())
+                .biography(d.getBiography())
+                .consultationFee(d.getConsultationFee())
+                .build();
+    }
 }

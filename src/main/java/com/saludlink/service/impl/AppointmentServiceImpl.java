@@ -1,6 +1,7 @@
 package com.saludlink.service.impl;
 
 import com.saludlink.model.dto.AppointmentRequestDTO;
+import com.saludlink.model.dto.AppointmentRescheduleDTO;
 import com.saludlink.model.dto.AppointmentResponseDTO;
 import com.saludlink.model.entity.Appointment;
 import com.saludlink.model.enums.AppointmentStatus;
@@ -11,6 +12,7 @@ import com.saludlink.service.AppointmentService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,12 +71,59 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public void cancelAppointmentForPatient(Long appointmentId, Long patientId) {
+        Appointment appointment =
+                appointmentRepository
+                        .findById(appointmentId)
+                        .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + appointmentId));
+        if (!appointment.getPatient().getId().equals(patientId)) {
+            throw new AccessDeniedException("La cita no pertenece al paciente autenticado");
+        }
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+    }
+
+    @Override
     public void updateAppointmentStatus(Long id, AppointmentStatus status) {
         Appointment appointment =
                 appointmentRepository
                         .findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + id));
         appointment.setStatus(status);
+    }
+
+    @Override
+    public AppointmentResponseDTO rescheduleForPatient(
+            Long appointmentId, Long patientId, AppointmentRescheduleDTO dto) {
+        Appointment appointment =
+                appointmentRepository
+                        .findById(appointmentId)
+                        .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + appointmentId));
+        if (!appointment.getPatient().getId().equals(patientId)) {
+            throw new AccessDeniedException("La cita no pertenece al paciente autenticado");
+        }
+        applyReschedule(appointment, dto);
+        return toResponse(appointment);
+    }
+
+    @Override
+    public AppointmentResponseDTO rescheduleAsAdmin(Long appointmentId, AppointmentRescheduleDTO dto) {
+        Appointment appointment =
+                appointmentRepository
+                        .findById(appointmentId)
+                        .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada: " + appointmentId));
+        applyReschedule(appointment, dto);
+        return toResponse(appointment);
+    }
+
+    private void applyReschedule(Appointment appointment, AppointmentRescheduleDTO dto) {
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED
+                || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+            throw new IllegalArgumentException("No se puede reprogramar una cita cancelada o completada");
+        }
+        appointment.setAppointmentDate(dto.getAppointmentDate());
+        if (dto.getModality() != null) {
+            appointment.setModality(dto.getModality());
+        }
     }
 
     private AppointmentResponseDTO toResponse(Appointment a) {

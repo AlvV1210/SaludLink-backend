@@ -1,6 +1,7 @@
 package com.saludlink.service.impl;
 
 import com.saludlink.model.dto.MedicationRequestDTO;
+import com.saludlink.model.dto.MedicationResponseDTO;
 import com.saludlink.model.entity.Medication;
 import com.saludlink.repository.MedicationRepository;
 import com.saludlink.repository.PatientRepository;
@@ -8,6 +9,7 @@ import com.saludlink.service.MedicationService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +22,7 @@ public class MedicationServiceImpl implements MedicationService {
     private final PatientRepository patientRepository;
 
     @Override
-    public Medication addMedication(Long patientId, MedicationRequestDTO dto) {
+    public MedicationResponseDTO addMedication(Long patientId, MedicationRequestDTO dto) {
         var patient =
                 patientRepository
                         .findById(patientId)
@@ -35,16 +37,19 @@ public class MedicationServiceImpl implements MedicationService {
                         .endDate(dto.getEndDate())
                         .active(true)
                         .build();
-        return medicationRepository.save(medication);
+        Medication saved = medicationRepository.save(medication);
+        return MedicationResponseDTO.fromEntity(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Medication> getMedicationsByPatient(Long patientId) {
+    public List<MedicationResponseDTO> getMedicationsByPatient(Long patientId) {
         if (!patientRepository.existsById(patientId)) {
             throw new EntityNotFoundException("Paciente no encontrado: " + patientId);
         }
-        return medicationRepository.findByPatientId(patientId);
+        return medicationRepository.findByPatientId(patientId).stream()
+                .map(MedicationResponseDTO::fromEntity)
+                .toList();
     }
 
     @Override
@@ -53,6 +58,18 @@ public class MedicationServiceImpl implements MedicationService {
                 medicationRepository
                         .findById(medicationId)
                         .orElseThrow(() -> new EntityNotFoundException("Medicamento no encontrado: " + medicationId));
+        medication.setActive(false);
+    }
+
+    @Override
+    public void deactivateMedicationForPatient(Long medicationId, Long patientId) {
+        Medication medication =
+                medicationRepository
+                        .findById(medicationId)
+                        .orElseThrow(() -> new EntityNotFoundException("Medicamento no encontrado: " + medicationId));
+        if (!medication.getPatient().getId().equals(patientId)) {
+            throw new AccessDeniedException("El medicamento no pertenece al paciente autenticado");
+        }
         medication.setActive(false);
     }
 }
