@@ -1,73 +1,166 @@
 # SaludLink
 
-Backend para gestionar citas médicas, medicamentos, documentos, recordatorios y catálogo de especialidades (Spring Boot + PostgreSQL + JWT).
+Backend para gestionar citas médicas, medicamentos, documentos, recordatorios, instituciones y catálogo de especialidades (Spring Boot + PostgreSQL + JWT).
+
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| Java | 21 |
+| Framework | Spring Boot 3.2.6 |
+| Base de datos | PostgreSQL (Docker local / Render) |
+| Mapper | MapStruct 1.6.3 |
+| Documentación | springdoc-openapi (Swagger UI) |
+| Build | Maven Wrapper |
+
+## Arquitectura
+
+Organización **package by feature** (referencia: PagoYa). Cada bounded context agrupa `controller`, `service`, `repository`, `model`, `dto`, `mapper`, `exception`. Lo transversal vive en `shared/`.
+
+```
+src/main/java/com/saludlink/
+├── SaludLinkApplication.java
+├── shared/           config, exception, pagination, HealthController
+├── auth/
+├── patient/
+├── doctor/
+├── appointment/
+├── medication/
+├── medicalrecord/
+├── institution/
+├── adherence/
+├── mentalhealth/
+├── telemedicine/     videoconsulta, chat, emergencia
+├── payment/
+└── review/
+```
 
 ## Desarrollo local
 
-1. Base de datos: desde esta carpeta, `docker compose up -d db` (puerto **5433**, usuario `postgres`, contraseña como en `docker-compose.yml` y variables en `application.yml`).
-2. Arranque (Java **17+**, p. ej. Temurin 21): no hace falta tener Maven instalado; el repo incluye **Maven Wrapper**.
-   - **Windows (PowerShell):** `.\mvnw.cmd spring-boot:run`
-   - **macOS / Linux:** `./mvnw spring-boot:run`
-   - La primera vez descarga Maven en tu carpeta de usuario (necesita red). Si falla por `JAVA_HOME`, instala un **JDK 17 o superior** (p. ej. 21) y define `JAVA_HOME` apuntando a la raíz del JDK (o usa *Run* sobre `SaludLinkApplication` desde el IDE).
-   - Si ya tienes Maven en el PATH, `mvn spring-boot:run` sigue siendo válido.
-3. La API queda en `http://localhost:8080`. El esquema JPA usa `ddl-auto: update` (p. ej. crea/ajusta tablas como `medication_intakes` al arrancar).
+1. Copia `.env.example` a `.env` y ajusta valores.
+2. Infraestructura local:
+   ```powershell
+   docker compose up -d saludlink_db pgadmin
+   ```
+3. Arranque del backend:
+   - **Windows:** `mvn spring-boot:run`
+   - **Windows:** `.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local`
+   - **IntelliJ IDEA:** importar como Maven, JDK 21, Run `SaludLinkApplication` con perfil `local` y variables de `.env.example`.
+4. URLs locales:
 
-## Contrato HTTP y documentación
+| Servicio | URL / puerto | Credenciales |
+|---|---|---|
+| API | `http://localhost:8080` | — |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` | — |
+| PostgreSQL (`saludlink_db`) | `localhost:5433` | usuario `postgres` / `admin123` |
+| pgAdmin (`saludlink_pgadmin`) | `http://localhost:8082` | `admin@saludlink.com` / `admin` |
 
-- **Swagger UI** : `http://localhost:8080/swagger-ui.html` — prueba endpoints y el esquema Bearer JWT desde la UI.
-- **Swagger Editor** (editor online): útil para revisar o compartir el OpenAPI; en el editor, *File → Import URL* y pega `http://localhost:8080/v3/api-docs` (el backend debe estar levantado y accesible desde tu red; si no, exporta el JSON desde Swagger UI y ábrelo como archivo).
+### pgAdmin (registrar el servidor)
 
-## Capas / arquitectura
+Desde pgAdmin en Docker, agrega un servidor con:
 
-En `docs/structurizr/workspace.dsl` hay un workspace mínimo para [Structurizr](https://structurizr.com/) (contexto + contenedores). Puedes subirlo a Structurizr Lite/Cloud.
+| Campo | Valor |
+|---|---|
+| Host name/address | `saludlink_db` |
+| Port | `5432` |
+| Maintenance database | `saludlink_db` |
+| Username | `postgres` |
+| Password | `admin123` |
 
-## Secretos
+Si usas pgAdmin instalado en tu PC (fuera de Docker), conecta con host `localhost` y puerto `5433`.
 
-Usa `.env.example` como referencia de variables. En despliegue (p. ej. Render) suelen definirse `JDBC_*`, `JWT_SECRET`, etc., como en `application.yml`.
+### Base de datos legacy (desarrollo local)
 
-## API (resumen de contratos útiles)
+Si migraste desde una versión anterior del proyecto y ves errores al crear citas (`appointments_modality_check` o `appointments_status_check`), ejecuta en Postgres:
 
-### Autenticación y perfil
+```powershell
+Get-Content docs/local-db-legacy-constraints.sql | docker exec -i saludlink_db psql -U postgres -d saludlink_db
+```
 
-- `POST /api/auth/register`, `POST /api/auth/login`
-- `GET /api/auth/me` — usuario actual (JWT); incluye `patientId` / `doctorId` si aplica.
-- `GET` / `PUT /api/patients/me/profile` — perfil de salud del paciente autenticado (**PATIENT**).
+O pega el contenido de `docs/local-db-legacy-constraints.sql` en pgAdmin.
 
-### Citas
+## Despliegue en Render
 
-- `PATCH /api/appointments/{id}/reschedule` — reprogramar (**PATIENT** dueño o **ADMIN**).
-- Listado, creación y cancelación según roles (ver Swagger).
+El archivo [`render.yaml`](render.yaml) define un **Blueprint** que crea PostgreSQL (`saludlink-db`) y el servicio web Docker (`saludlink-api`), igual que en PagoYa.
 
-### Medicamentos
+### Pasos
 
-- Listado y alta del paciente; alta/listado por `patientId` para **PATIENT** / **ADMIN** / **DOCTOR**; baja lógica con `PUT` o `PATCH` en `/{id}/deactivate` (equivalentes).
-- **Recordatorios:** `GET` / `POST /api/medications/{medicationId}/reminders`; `PATCH /api/medication-reminders/{id}/taken` (**PATIENT** dueño del medicamento, o **ADMIN** / **DOCTOR**).
-- **Tomas (intakes):** `GET` / `POST /api/medications/{medicationId}/intakes` — historial y registro de toma (`takenAt` opcional, por defecto ahora; `notes` opcional; cuerpo opcional en el POST).
+1. Sube este repositorio a GitHub (rama `main`).
+2. En [Render](https://render.com): **New +** → **Blueprint** → conecta el repo.
+3. Tras el primer deploy, en el dashboard del servicio `saludlink-api` define **`CORS_ALLOWED_ORIGINS`** con la URL del frontend (ej. `https://tu-app.vercel.app`). Sin esto el navegador bloqueará peticiones CORS.
+4. Verifica el health check:
 
-### Documentos médicos (metadatos / URL, sin subida de binario al servidor)
+   ```powershell
+   curl https://saludlink-api.onrender.com/actuator/health
+   ```
 
-- `GET` / `POST /api/medical-documents`, `DELETE /api/medical-documents/{id}` (**PATIENT**; `fileUrl` obligatorio en el alta).
+   (La URL exacta aparece en el dashboard de Render.)
 
-### Catálogo y administración
+### Variables que Render configura automáticamente
 
-- `GET /api/doctors`, `GET /api/doctors/{id}`, especialidades en `/api/specialties` (según controladores del proyecto).
-- `POST /api/admin/doctors` — alta de médico por **ADMIN** (usuario rol **DOCTOR** + fila en `doctors`; `verified` inicia en `false`).
+| Variable | Origen |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `prod` (en `render.yaml`) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | Base de datos vinculada |
+| `JWT_SECRET` | Generado por Render |
+| `PORT` | Asignado por Render en runtime |
 
-## Funcionalidades ya cubiertas en backend
+### Perfil `prod`
 
-- Citas del paciente (listar, crear, cancelar, reprogramar según rol).
-- Medicamentos del paciente (CRUD operativo y desactivar; alias PUT/PATCH en desactivar).
-- Recordatorios de medicación y registro de tomas (intakes).
-- Documentos médicos (metadatos y enlace a fichero almacenado fuera, p. ej. S3 o CDN).
-- Alta de médicos vía administrador.
-- Catálogo para agendar (especialidades y listado de médicos verificados en los endpoints públicos de catálogo).
+`src/main/resources/application-prod.yml` usa `DB_*` (Render) y también acepta `JDBC_DATABASE_*` o `DB_URL` si despliegas en otra plataforma.
 
-## Próximas (backlog)
+### Despliegue manual (sin Blueprint)
 
-- Verificación de médicos tras el alta (`verified`, panel o flujo de revisión).
-- Registro de doctor sin intervención de admin (si el producto lo requiere).
-- Disponibilidad o reglas de agenda (slots, no solapamiento).
-- Panel admin ampliado (usuarios, reportes simples).
-- Notificaciones o recordatorios programados (stub + colas / cron).
-- Integración / despliegue (Render, variables `JDBC_*`, health).
-- Semillas de datos + pruebas automatizadas documentadas.
+Crea un **Web Service** con runtime **Docker**, conecta el repo y define:
+
+- `SPRING_PROFILES_ACTIVE=prod`
+- Variables de BD (`DB_HOST`, etc. o `JDBC_DATABASE_URL`)
+- `JWT_SECRET` (cadena larga aleatoria)
+- `CORS_ALLOWED_ORIGINS`
+
+## Despliegue Railway (alternativa)
+
+Define en el dashboard: `SPRING_PROFILES_ACTIVE=prod`, `JDBC_DATABASE_URL`, `JDBC_DATABASE_USERNAME`, `JDBC_DATABASE_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION`, `PORT`, `CORS_ALLOWED_ORIGINS`.
+
+## Convenciones del código
+
+| Tema | Convención |
+|---|---|
+| DTOs | Java `record` + Bean Validation (`*Request`, `*Response`, `*Report`) |
+| Services | `I<X>Service` + implementación; `@Transactional` por método |
+| Mappers | MapStruct `@Mapper(componentModel = "spring")` |
+| Excepciones | `BusinessRuleException` (400), `ResourceNotFoundException` (404) → `GlobalExceptionHandler` |
+| Controllers | Delgados, `@Tag`, `@Operation`; URLs `/api/<kebab-plural>` |
+| Paginación | `PageResponse<T>` en `shared/pagination` |
+
+## GitFlow
+
+- `main` → producción (Render / Railway)
+- `develop` → integración
+- Features: `feature/BOOK-XX-descripcion` → PR a `develop` (proyecto SaludLink en Jira)
+
+## Jira
+
+Ver [docs/jira-setup.md](docs/jira-setup.md) para épicas, stories HU01–HU24, subtareas y sprints en [Jira SaludLink](https://alvarofelices8.atlassian.net/jira/software/projects/BOOK/boards).
+
+## API (resumen)
+
+- **Auth:** `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
+- **Paciente:** `GET/PUT /api/patients/me/profile`, `PUT /api/patients/me/notification-preferences`
+- **Institución:** `POST /api/institutions/register`, dashboard y reportes en `/api/institutions/me/*`
+- **Médicos:** catálogo público `GET /api/doctors`, disponibilidad `POST /api/doctors/me/availability`
+- **Citas:** CRUD + `PATCH /api/appointments/{id}/reschedule`
+- **Medicación:** medicamentos, recordatorios, intakes; `PATCH` deactivate
+- **Documentos:** `GET/POST/DELETE /api/medical-documents`
+- **Adherencia:** `GET /api/adherence/patients/{id}`
+- **Salud mental:** `POST /api/mental-health/screenings`
+- **Emergencia:** `GET /api/emergency/contacts`
+- **Dependientes:** `GET/POST /api/patients/me/dependents`
+- **Export historial:** `POST /api/medical-records/export`, `GET /api/medical-records/export/{code}/download`
+- **Pagos:** `POST /api/payments/appointments/{id}`
+- **Reseñas:** `POST /api/reviews`, `GET /api/doctors/{id}/reviews`
+- **Telemedicina:** `POST /api/telemedicine/appointments/{id}/join`, mensajes en `/messages`
+
+## Structurizr
+
+Workspace C4 en `docs/structurizr/workspace.dsl`.
