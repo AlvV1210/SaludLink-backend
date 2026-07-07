@@ -1,0 +1,26 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    # Render inyecta DB_HOST/DB_PORT/DB_NAME; Railway puede usar JDBC_DATABASE_* o DB_URL directo.
+    url: ${JDBC_DATABASE_URL:${DB_URL:jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:saludlink_db}}}
+    username: ${JDBC_DATABASE_USERNAME:${DB_USERNAME}}
+    password: ${JDBC_DATABASE_PASSWORD:${DB_PASSWORD}}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+saludlink:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  telemedicine:
+    base-url: ${TELEMEDICINE_BASE_URL:https://meet.saludlink.app}

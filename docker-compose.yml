@@ -1,6 +1,7 @@
 services:
-  db:
-    image: postgres:15-alpine
+  saludlink_db:
+    image: pgvector/pgvector:pg15
+    container_name: saludlink_db
     environment:
       POSTGRES_DB: saludlink_db
       POSTGRES_USER: postgres
@@ -10,16 +11,32 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: saludlink_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@saludlink.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8082:80"
+    depends_on:
+      - saludlink_db
+
   app:
     build: .
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      - saludlink_db
     environment:
-      JDBC_DATABASE_URL: jdbc:postgresql://db:5432/saludlink_db
-      JDBC_DATABASE_USERNAME: postgres
-      JDBC_DATABASE_PASSWORD: admin123
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: saludlink_db
+      DB_PORT: "5432"
+      DB_NAME: saludlink_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin123
+      JWT_SECRET: local-docker-jwt-secret-min-32-characters-long
+      CORS_ALLOWED_ORIGINS: http://localhost:4200,http://localhost:5173
 
 volumes:
   postgres_data:

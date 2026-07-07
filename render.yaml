@@ -1,0 +1,65 @@
+# ============================================================================
+#  Render Blueprint para SaludLink API
+# ----------------------------------------------------------------------------
+#  Crea automaticamente:
+#    1) Base de datos PostgreSQL
+#    2) Web service (API) construido con el Dockerfile del repo
+#
+#  Como desplegar:
+#    1. Sube este repositorio a GitHub (rama main).
+#    2. En Render: New + -> Blueprint -> conecta el repo.
+#    3. Completa CORS_ALLOWED_ORIGINS en el dashboard (sync: false).
+# ============================================================================
+
+databases:
+  - name: saludlink-db
+    databaseName: saludlink_db
+    user: saludlink
+    plan: free
+
+services:
+  - type: web
+    name: saludlink-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /actuator/health
+
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      - key: DB_HOST
+        fromDatabase:
+          name: saludlink-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: saludlink-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: saludlink-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: saludlink-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: saludlink-db
+          property: password
+
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRATION
+        value: "86400000"
+
+      # URL(s) del frontend en Netlify, separadas por coma.
+      # Ej: https://saludlink.netlify.app,http://localhost:4200
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+
+      - key: OPENAI_API_KEY
+        sync: false
